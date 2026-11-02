@@ -1,4 +1,10 @@
-import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
 
 import type { Appointment } from "./domain.js";
 
@@ -6,6 +12,7 @@ export interface AppointmentRepository {
   put(appointment: Appointment): Promise<void>;
   get(id: string): Promise<Appointment | null>;
   listByPatient(patientId: string): Promise<Appointment[]>;
+  delete(id: string): Promise<boolean>;
 }
 
 /** In-memory repository for unit tests and local runs. */
@@ -22,6 +29,10 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
 
   async listByPatient(patientId: string): Promise<Appointment[]> {
     return [...this.items.values()].filter((a) => a.patientId === patientId);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.items.delete(id);
   }
 }
 
@@ -52,5 +63,14 @@ export class DynamoAppointmentRepository implements AppointmentRepository {
       ExpressionAttributeValues: { ":p": patientId },
     }));
     return (res.Items as Appointment[] | undefined) ?? [];
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const res = await this.doc.send(new DeleteCommand({
+      TableName: this.tableName,
+      Key: { id },
+      ReturnValues: "ALL_OLD",
+    }));
+    return res.Attributes !== undefined;
   }
 }

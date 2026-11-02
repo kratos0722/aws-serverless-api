@@ -35,6 +35,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }
       return json(200, await service.listByPatient(patientId));
     }
+    if (method === "PUT" && id) {
+      const body = event.body ? JSON.parse(event.body) : {};
+      const updated = await service.update(id, body);
+      return updated ? json(200, updated) : json(404, { message: "appointment not found" });
+    }
+    if (method === "DELETE" && id) {
+      const existed = await service.remove(id);
+      return existed ? json(204, null) : json(404, { message: "appointment not found" });
+    }
     return json(405, { message: "method not allowed" });
   } catch (error) {
     if (error instanceof ZodError) {
