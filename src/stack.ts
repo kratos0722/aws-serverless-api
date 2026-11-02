@@ -41,7 +41,11 @@ export class ServerlessApiStack extends cdk.Stack {
     const api = new HttpApi(this, "AppointmentsApi");
     const integration = new HttpLambdaIntegration("AppointmentsIntegration", fn);
     api.addRoutes({ path: "/appointments", methods: [HttpMethod.POST, HttpMethod.GET], integration });
-    api.addRoutes({ path: "/appointments/{id}", methods: [HttpMethod.GET], integration });
+    api.addRoutes({
+      path: "/appointments/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      integration,
+    });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
   }
